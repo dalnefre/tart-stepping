@@ -33,7 +33,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 var tart = require('../index.js');
 var util = require('util');
 
-var tracing = tart.tracing();
+var stepping = tart.stepping();
 
 var createdBeh = function createdBeh(message) {};
 var becomeBeh = function becomeBeh(message) {};
@@ -44,16 +44,16 @@ var oneTimeBeh = function oneTimeBeh(message) {
     this.behavior = becomeBeh; // become
 };
 
-var actor = tracing.sponsor(oneTimeBeh);
+var actor = stepping.sponsor(oneTimeBeh);
 actor('bar');
 
 var effect;
 
-console.log('tracing:');
-console.log(util.inspect(tracing, {depth: null}));
-while ((effect = tracing.dispatch()) != false) {
+console.log('stepping:');
+console.log(util.inspect(stepping, {depth: null}));
+while ((effect = stepping.dispatch()) != false) {
     console.log('effect:');
     console.log(util.inspect(effect, {depth: null}));
 };
-console.log('tracing:');
-console.log(util.inspect(tracing, {depth: null}));
+console.log('stepping:');
+console.log(util.inspect(stepping, {depth: null}));

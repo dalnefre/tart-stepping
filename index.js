@@ -1,6 +1,6 @@
 /*
 
-index.js - "tart-tracing": Tracing configuration implementation
+index.js - "tart-stepping": Stepping configuration implementation
 
 The MIT License (MIT)
 
@@ -47,7 +47,7 @@ var tart = require('tart');
     * `dequeue`: _Function_ `function (eventQueue){}` Function that returns next
         event to be dispatched given an `eventQueue`
         _(Example: `function (eventQueue){ return eventQueue.shift(); }`)_.
-  * Return: _Object_ The tracing control object.
+  * Return: _Object_ The stepping control object.
     * `dispatch`: _Function_ `function () {}` Function to call in order to
         dispatch a single event.
     * `history`: _Array_ An array of effects that represents the history of
@@ -56,7 +56,7 @@ var tart = require('tart');
     * `sponsor`: _Function_ `function (behavior) {}` A capability to create
         new actors.
 */
-module.exports.tracing = function tracing(options) {
+module.exports.stepping = function stepping(options) {
     options = options || {};
 
     var events = [];
@@ -106,11 +106,11 @@ module.exports.tracing = function tracing(options) {
 
     /*
     Record `effect` in `history`
-    and initialize a new `options.tracing.effect` object.
+    and initialize a new `options.stepping.effect` object.
     */
     var recordEffect = function recordEffect(effect) {
         history.push(effect);
-        options.tracing.effect = {
+        options.stepping.effect = {
             created: [],
             sent: []
         };
@@ -120,13 +120,13 @@ module.exports.tracing = function tracing(options) {
       * Return: _Effect_ or `false`. Effect of dispatching the next `event` or
           `false` if no events exists for dispatch.
     */
-    var tracingDispatch = function tracingDispatch() {
-        applyExternalEffect(options.tracing.effect);  // WARNING: may change `options.tracing.effect`
+    var steppingDispatch = function steppingDispatch() {
+        applyExternalEffect(options.stepping.effect);  // WARNING: may change `options.stepping.effect`
         var event = options.dequeue(events);
         if (!event) {
             return false;
         }
-        var effect = options.tracing.effect;
+        var effect = options.stepping.effect;
         effect.event = event;
         try {
             var behavior = event.context.behavior;
@@ -138,7 +138,7 @@ module.exports.tracing = function tracing(options) {
         } catch (exception) {
             effect.exception = exception;
         }
-        applyBehaviorEffect(effect);  // WARNING: will change `options.tracing.effect`
+        applyBehaviorEffect(effect);  // WARNING: will change `options.stepping.effect`
         return effect;
     };
 
@@ -162,7 +162,7 @@ module.exports.tracing = function tracing(options) {
             throw exception;
         };
         while ((control.count === undefined) || (--control.count >= 0)) {
-            var effect = options.tracing.dispatch();
+            var effect = options.stepping.dispatch();
             control.log(effect);  // log event
             if (effect === false) {
                 return true;  // event queue exhausted
@@ -182,18 +182,18 @@ module.exports.tracing = function tracing(options) {
         var config = function create(behavior) {
             var actor = function send(message) {
                 var event = {
-                    cause: options.tracing.effect.event,
+                    cause: options.stepping.effect.event,
                     message: message,
                     context: context
                 };
-                options.tracing.effect.sent.push(event);
+                options.stepping.effect.sent.push(event);
             };
             var context = {
                 self: actor,
                 behavior: behavior,
                 sponsor: config
             };
-            options.tracing.effect.created.push(context);
+            options.stepping.effect.created.push(context);
             return actor;
         };
         return config;
@@ -202,16 +202,16 @@ module.exports.tracing = function tracing(options) {
     options.dispatch = unused;
     options.deliver = unused;
 
-    options.tracing = {
+    options.stepping = {
         effect: {
             created: [],
             sent: []
         },
         history: history,
-        dispatch: tracingDispatch,
+        dispatch: steppingDispatch,
         eventLoop: eventLoop,
         sponsor: tart.pluggable(options)
     };
 
-    return options.tracing;
+    return options.stepping;
 };

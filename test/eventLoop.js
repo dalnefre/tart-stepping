@@ -36,7 +36,7 @@ var test = module.exports = {};
 
 test["eventLoop by default dispatches all events and returns 'true'"] = function (test) {
     test.expect(3);
-    var controls = tart.tracing();
+    var controls = tart.stepping();
 
     var firstBeh = function firstBeh(message) {
         test.equal(message, 'first');
@@ -61,7 +61,7 @@ test["eventLoop by default dispatches all events and returns 'true'"] = function
 
 test["eventLoop dispatches specified number of events and returns 'false' if not drained"] = function (test) {
     test.expect(4);
-    var controls = tart.tracing();
+    var controls = tart.stepping();
 
     var actor = controls.sponsor(function (message) {
         test.ok(message);
@@ -75,7 +75,7 @@ test["eventLoop dispatches specified number of events and returns 'false' if not
 
 test["eventLoop throw exception and pause by default if actor behavior throws an exception"] = function (test) {
     test.expect(5);
-    var controls = tart.tracing();
+    var controls = tart.stepping();
     var exception = new Error('failed');
 
     var failBeh = function failBeh(message) {
@@ -103,7 +103,7 @@ test["eventLoop throw exception and pause by default if actor behavior throws an
 
 test["eventLoop allows fail handler to be overriden"] = function (test) {
     test.expect(3);
-    var controls = tart.tracing();
+    var controls = tart.stepping();
     var exception = new Error('failed');
 
     var failBeh = function failBeh(message) {
@@ -122,7 +122,7 @@ test["eventLoop allows fail handler to be overriden"] = function (test) {
 
 test["eventLoop allows for logging effects of dispatched events"] = function (test) {
     test.expect(5);
-    var controls = tart.tracing();
+    var controls = tart.stepping();
 
     var firstBeh = function firstBeh(message) {
         test.equal(message, 'first');

@@ -34,11 +34,10 @@ var tart = require('../index.js');
 
 var test = module.exports = {};
 
-test['tracing allows for alternate constructConfig mechanism'] = function (test) {
+test['stepping allows for alternate constructConfig mechanism'] = function (test) {
     test.expect(3);
     var newBeh = function newBeh(message) {
         test.equal(message, 'foo');
-        test.done();
     };
 
     var constructConfig = function constructConfig(options) {
@@ -47,27 +46,28 @@ test['tracing allows for alternate constructConfig mechanism'] = function (test)
             test.strictEqual(behavior, newBeh);
             var actor = function send(message) {
                 var event = {
-                    cause: options.tracing.effect.event,
+                    cause: options.stepping.effect.event,
                     message: message,
                     context: context
                 };
-                options.tracing.effect.sent.push(event);
+                options.stepping.effect.sent.push(event);
             };
             var context = {
                 self: actor,
                 behavior: behavior,
                 sponsor: config
             };
-            options.tracing.effect.created.push(context);
+            options.stepping.effect.created.push(context);
             return actor;
         };
         return config;
     };
 
-    var controls = tart.tracing({constructConfig: constructConfig});
+    var controls = tart.stepping({constructConfig: constructConfig});
 
     var actor = controls.sponsor(newBeh);
     actor('foo');
     while (controls.dispatch() !== false) // run to completion
         ;
+    test.done();
 };

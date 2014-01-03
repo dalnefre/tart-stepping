@@ -155,7 +155,7 @@ stepping.eventLoop();
   * `behavior`: _Function_ `function (message) {}` Actor behavior to invoke every time an actor receives a message.
   * Return: _Function_ `function (message) {}` Actor reference in form of a capability that can be invoked to send the actor a message.
 
-Creates a new (traceable) actor and returns the actor reference in form of a capability to send that actor a message.
+Creates a new actor and returns the actor reference in form of a capability to send that actor a message.
 
 ```javascript
 var tart = require('tart-stepping');
