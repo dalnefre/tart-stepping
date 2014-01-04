@@ -51,7 +51,13 @@ and sending the return value to `message.customer`.
 */
 var adapter = function adapter(obj, fn) {
     return function applyBeh(message) {
-        message.customer(fn.apply(obj, message.arguments));
+        try {
+            var result = fn.apply(obj, message.arguments);
+            message.customer(result);
+        } catch (ex) {
+            console.log(ex);
+            message.customer(ex);
+        }
     };
 };
 
@@ -94,7 +100,7 @@ var roundRobin = function roundRobin(children) {
     return dispatchBeh;
 };
 
-/**/
+/*
 var dispatchA = rootSponsor(adapter(steppingA, steppingA.dispatch));
 var dispatchB = rootSponsor(adapter(steppingB, steppingB.dispatch));
 var dispatchC = rootSponsor(adapter(steppingC, steppingC.dispatch));
@@ -105,7 +111,7 @@ var multiplexer = rootSponsor(roundRobin([
     dispatchB, 
     dispatchC 
 ]));
-/**/
+*/
 
 /*
 Create an actor behavior that multiplexes
@@ -126,7 +132,7 @@ var multiplex = function multiplex(children) {
         this.behavior = statusBeh;  // wait for eventLoop status
     };
     var statusBeh = function statusBeh(empty) {
-    	console.log(i, empty);
+//        console.log(i, empty);
         if (empty) {
             --n;  // countdown idle children
         } else {
@@ -144,7 +150,7 @@ var multiplex = function multiplex(children) {
     return dispatchBeh;
 };
 
-/*
+/**/
 var eventLoopA = rootSponsor(adapter(steppingA, steppingA.eventLoop));
 var eventLoopB = rootSponsor(adapter(steppingB, steppingB.eventLoop));
 var eventLoopC = rootSponsor(adapter(steppingC, steppingC.eventLoop));
@@ -152,7 +158,7 @@ var eventLoopC = rootSponsor(adapter(steppingC, steppingC.eventLoop));
 var multiplexer = rootSponsor(multiplex([
     { eventLoop:eventLoopA, options:{ count:1 } }, 
     { eventLoop:eventLoopB }, 
-    { eventLoop:eventLoopC, options:{} }
+    { eventLoop:eventLoopC, options:{ count:2 } }
 ]));
 /**/
 
