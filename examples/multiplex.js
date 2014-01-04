@@ -44,19 +44,24 @@ var steppingA = tart.stepping();
 var steppingB = tart.stepping();
 var steppingC = tart.stepping();
 
+var defaultFail = function fail(exception) {
+    throw exception;
+};
+
 /*
 Create an actor behavior that calls a synchronous object method
 using `message.arguments` as the argument list
-and sending the return value to `message.customer`.
+and sending the return value to `message.ok`.
+If an exception is thrown, it is sent to `message.fail`.
 */
 var adapter = function adapter(obj, fn) {
     return function applyBeh(message) {
+        var ok = message.ok;
+        var fail = message.fail || defaultFail;
         try {
-            var result = fn.apply(obj, message.arguments);
-            message.customer(result);
+            ok(fn.apply(obj, message.arguments));
         } catch (ex) {
-            console.log(ex);
-            message.customer(ex);
+            fail(ex);
         }
     };
 };
@@ -72,18 +77,21 @@ var roundRobin = function roundRobin(children) {
     var n = m;  // countdown to idle
     var i = 0;  // current child index
     var dispatchBeh = function dispatchBeh() {
+        var self = this.self;
+        var fail = function fail(ex) {
+            console.log(ex);
+            self(false);  // treat exception as no events
+        };
         var child = children[i];
         child({
             arguments: [],
-            customer: this.self
+            ok: self,
+            fail: fail
         });
         this.behavior = effectBeh;  // wait for dispatch effect
     };
     var effectBeh = function effectBeh(effect) {
         if (effect) {
-/*
-            console.log(util.inspect(effect, {depth: null}));
-*/
             n = m;  // reset idle countdown
         } else {
             --n;  // countdown idle children
@@ -93,8 +101,8 @@ var roundRobin = function roundRobin(children) {
             if (i >= m) {
                 i = 0;
             }
-            this.self();
             this.behavior = dispatchBeh;  // dispatch next event
+            this.self();
         }
     };
     return dispatchBeh;
@@ -124,15 +132,20 @@ var multiplex = function multiplex(children) {
     var n = m;  // countdown to idle
     var i = 0;  // current child index
     var dispatchBeh = function dispatchBeh() {
+        var self = this.self;
+        var fail = function fail(ex) {
+            console.log(ex);
+            self(true);  // treat exception as queue empty
+        };
         var child = children[i];
         child.eventLoop({
             arguments: [ child.options ],
-            customer: this.self
+            ok: self,
+            fail: fail
         });
         this.behavior = statusBeh;  // wait for eventLoop status
     };
     var statusBeh = function statusBeh(empty) {
-//        console.log(i, empty);
         if (empty) {
             --n;  // countdown idle children
         } else {
@@ -143,8 +156,8 @@ var multiplex = function multiplex(children) {
             if (i >= m) {
                 i = 0;
             }
-            this.self();
             this.behavior = dispatchBeh;  // dispatch next event
+            this.self();
         }
     };
     return dispatchBeh;
