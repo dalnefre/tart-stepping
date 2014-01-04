@@ -188,9 +188,9 @@ var countdown = function countdown(label) {
     };
 };
 
-var countdownA = steppingA.sponsor(countdown('--A--'));
-var countdownB = steppingB.sponsor(countdown('--B--'));
-var countdownC = steppingC.sponsor(countdown('--C--'));
+var countdownA = steppingA.sponsor(countdown('.O.|.|.'));
+var countdownB = steppingB.sponsor(countdown('.|.O.|.'));
+var countdownC = steppingC.sponsor(countdown('.|.|.O.'));
 
 countdownA(2);
 countdownB(3);
