@@ -93,7 +93,7 @@ test['stepping should not change initial state after dispatching'] = function (t
 };
 
 test['dispatch returns an effect of actor processing the message'] = function (test) {
-    test.expect(9);
+    test.expect(7);
     var stepping = tart.stepping();
 
     var createdBeh = function createdBeh(message) {};
@@ -112,8 +112,6 @@ test['dispatch returns an effect of actor processing the message'] = function (t
     test.strictEqual(effect.created[0].behavior, createdBeh);
     test.equal(effect.event.message, 'bar');
     test.equal(effect.sent[0].message, 'foo');
-    test.strictEqual(effect.sent[0].cause.message, 'bar');
-    test.strictEqual(effect.sent[0].cause.context.self, actor);
     test.strictEqual(effect.behavior, testBeh);
     test.strictEqual(effect.became, becomeBeh);
     test.strictEqual(effect.event.context.behavior, becomeBeh);
@@ -147,38 +145,6 @@ test["dispatch returns 'false' if no events to dispatch"] = function (test) {
 
     var effect = stepping.dispatch();
     test.strictEqual(effect, false);
-    test.done();
-};
-
-test['effects of a dispatched event become part of history'] = function (test) {
-    test.expect(12);
-    var stepping = tart.stepping();
-
-    var createdBeh = function createdBeh(message) {};
-    var becomeBeh = function becomeBeh(message) {};
-
-    var testBeh = function testBeh(message) {
-        var actor = this.sponsor(createdBeh); // create
-        actor('foo'); // send
-        this.behavior = becomeBeh; // become
-    };
-
-    var actor = stepping.sponsor(testBeh);
-    actor('bar');
-
-    test.equal(stepping.history.length, 0);
-    var effect = stepping.dispatch();
-    test.equal(stepping.history.length, 2);
-    test.strictEqual(effect, stepping.history[1]);
-    test.strictEqual(effect.created[0].behavior, createdBeh);
-    test.equal(effect.event.message, 'bar');
-    test.equal(effect.sent[0].message, 'foo');
-    test.strictEqual(effect.sent[0].cause.message, 'bar');
-    test.strictEqual(effect.sent[0].cause.context.self, actor);
-    test.strictEqual(effect.behavior, testBeh);
-    test.strictEqual(effect.became, becomeBeh);
-    test.strictEqual(effect.event.context.behavior, becomeBeh);
-    test.ok(!effect.exception);
     test.done();
 };
 

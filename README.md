@@ -45,7 +45,7 @@ var effect;
 
 console.log('stepping:');
 console.log(util.inspect(stepping, {depth: null}));
-while ((effect = stepping.dispatch()) != false) {
+while ((effect = stepping.dispatch()) !== false) {
     console.log('effect:');
     console.log(util.inspect(effect, {depth: null}));
 };
@@ -65,7 +65,6 @@ An `event` is an abstraction around the concept of a `message` being delivered t
 
 An `event` has the following attributes:
 
-  * `cause`: _Event_ _(Default: undefined)_ The `event` that caused this event to happen. Will be `undefined` if this event was not created in an actor behavior.
   * `context`: _Object_ Actor context the message was delivered to.
   * `message`: _Any_ Message that was delivered.
 
@@ -89,24 +88,32 @@ An `effect` is an _Object_ that is the _effect_ of dispatching an `event`. It ha
 
 ### tart.stepping(options)
 
-  * `options`: _Object_ _(Default: undefined)_ Optional overrides.  WARNING: Implementation of `enqueue` and `dequeue` are tightly coupled and should be overridden together.
-    * `constructConfig`: _Function_ _(Default: `function (options) {}`)_ `function (options) {}` Configuration creation function that is given `options`. It should return a capability `function (behavior) {}` to create new actors.
-    * `enqueue`: _Function_ `function (eventQueue, events){}` Function that enqueues the new `events` onto the `eventQueue` in place, causing side-effects _(Example: `function (eventQueue, events){ Array.prototype.push.apply(eventQueue, events); }`)_.
-    * `dequeue`: _Function_ `function (eventQueue){}` Function that returns next event to be dispatched given an `eventQueue` _(Example: `function (eventQueue){ return eventQueue.shift(); }`)_.
+  * `options`: _Object_ _(Default: undefined)_ Optional overrides.  
+      WARNING: Implementation of `enqueue` and `dequeue` are tightly coupled and should be overridden together.
+    * `constructConfig`: _Function_ _(Default: `function (options) {}`)_ `function (options) {}` 
+        Configuration creation function that is given `options`. 
+        It should return a capability `function (behavior) {}` to create new actors.
+    * `enqueue`: _Function_ `function (eventQueue, events){}` 
+        Function that enqueues the new `events` onto the `eventQueue` in place, causing side-effects 
+        _(Example: `function (eventQueue, events){ Array.prototype.push.apply(eventQueue, events); }`)_.
+    * `dequeue`: _Function_ `function (eventQueue){}` 
+        Function that returns next event to be dispatched given an `eventQueue` 
+        _(Example: `function (eventQueue){ return eventQueue.shift(); }`)_.
   * Return: _Object_ The stepping control object.
-    * `dispatch`: _Function_ `function () {}` Function to call in order to
-        dispatch a single event.
-    * `history`: _Array_ An array of effects that represents the history of
-        execution.
-    * `effect`: _Object_ Accumulated effects not yet committed to history.
-    * `sponsor`: _Function_ `function (behavior) {}` A capability to create
-        new actors.
+    * `dispatch`: _Function_ `function () {}` 
+        Function to call in order to dispatch a single event.
+    * `eventLoop`: _Function_ `function ([control]) {}` 
+        Function to call in order to dispatch multiple events.
+    * `effect`: _Object_ Accumulated effects from current step.
+    * `sponsor`: _Function_ `function (behavior) {}` 
+        A capability to create new actors.
 
-Returns the stepping control object.
+Create a stepping control object.
 
 ### stepping.dispatch()
 
-  * Return: _Effect_ or `false`. Effect of dispatching the next `event` or `false` if no events exists for dispatch.
+  * Return: _Effect_ or `false`. 
+      Effect of dispatching the next `event` or `false` if no events exists for dispatch.
 
 Dispatch the next `event`.
 
@@ -125,8 +132,10 @@ while ((effect = stepping.dispatch()) !== false) {
 
   * `control`: _Object_ _(Default: `undefined`)_ Optional overrides.
     * `count`: _Number_ _(Default: `undefined`)_ Maximum number of events to dispatch, or unlimited if `undefined`.
-    * `fail`: _Function_ `function (exception) {}` Function called to report exceptions thrown from an actor behavior. Exceptions are thrown by default. _(Example: `function (exception) {/*ignore exceptions*/}`)_.
-    * `log`: _Function_ `function (effect) {}` Function called with every effect resulting from an event dispatch.
+    * `fail`: _Function_ `function (exception) {}` 
+        Function called to report exceptions thrown from an actor behavior. Exceptions are thrown by default. _(Example: `function (exception) {/*ignore exceptions*/}`)_.
+    * `log`: _Function_ `function (effect) {}` 
+        Function called with every effect resulting from an event dispatch.
   * Return: _Boolean_ `true` if event queue is exhausted, `false` otherwise.
 
 Dispatch events in a manner provided by `control`. 

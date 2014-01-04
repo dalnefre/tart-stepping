@@ -33,37 +33,35 @@ OTHER DEALINGS IN THE SOFTWARE.
 var tart = require('tart');
 
 /*
-  * `options`: _Object_ _(Default: undefined)_ Optional overrides.  WARNING:
-      Implementation of `enqueue` and `dequeue` are tightly coupled and should
-      be overridden together.
-    * `constructConfig`: _Function_ _(Default: `function (options) {}`)_
-        `function (options) {}` Configuration creation function that
-        is given `options`. It should return a capability `function (behavior) {}`
-        to create new actors.
-    * `enqueue`: _Function_ `function (eventQueue, events){}` Function that
-        enqueues the new `events` onto the `eventQueue` in place, causing
-        side-effects _(Example: `function (eventQueue, events){
-        Array.prototype.push.apply(eventQueue, events); }`)_.
-    * `dequeue`: _Function_ `function (eventQueue){}` Function that returns next
-        event to be dispatched given an `eventQueue`
+Create a stepping control object.
+
+  * `options`: _Object_ _(Default: undefined)_ Optional overrides.  
+      WARNING: Implementation of `enqueue` and `dequeue` are tightly coupled and should be overridden together.
+    * `constructConfig`: _Function_ _(Default: `function (options) {}`)_ `function (options) {}` 
+        Configuration creation function that is given `options`. 
+        It should return a capability `function (behavior) {}` to create new actors.
+    * `enqueue`: _Function_ `function (eventQueue, events){}` 
+        Function that enqueues the new `events` onto the `eventQueue` in place, causing side-effects 
+        _(Example: `function (eventQueue, events){ Array.prototype.push.apply(eventQueue, events); }`)_.
+    * `dequeue`: _Function_ `function (eventQueue){}` 
+        Function that returns next event to be dispatched given an `eventQueue` 
         _(Example: `function (eventQueue){ return eventQueue.shift(); }`)_.
   * Return: _Object_ The stepping control object.
-    * `dispatch`: _Function_ `function () {}` Function to call in order to
-        dispatch a single event.
-    * `history`: _Array_ An array of effects that represents the history of
-        execution.
-    * `effect`: _Object_ Accumulated effects not yet committed to history.
-    * `sponsor`: _Function_ `function (behavior) {}` A capability to create
-        new actors.
+    * `dispatch`: _Function_ `function () {}` 
+        Function to call in order to dispatch a single event.
+    * `eventLoop`: _Function_ `function ([control]) {}` 
+        Function to call in order to dispatch multiple events.
+    * `effect`: _Object_ Accumulated effects from current step.
+    * `sponsor`: _Function_ `function (behavior) {}` 
+        A capability to create new actors.
 */
 module.exports.stepping = function stepping(options) {
     options = options || {};
 
-    var events = [];
-    var history = [];
+    var events = [];  // queue of pending events (in stepped batches)
 
     options.enqueue = options.enqueue || function enqueue(eventQueue, events) {
-        eventQueue.push(events.slice());  // clone event batch
+        eventQueue.push(events.slice());  // clone step batch
     };
     
     options.dequeue = options.dequeue || function dequeue(eventQueue) {
@@ -81,16 +79,16 @@ module.exports.stepping = function stepping(options) {
     Conditionally apply accumulated external effects.
     */
     var applyExternalEffect = function applyExternalEffect(effect) {
-        var record = false;
+        var changed = false;
         if (effect.sent.length > 0) {
             options.enqueue(events, effect.sent);
-            record = true;
+            changed = true;
         }
         if (effect.created.length > 0) {
-            record = true;
+            changed = true;
         }
-        if (record) {
-            recordEffect(effect);
+        if (changed) {
+            initEffect(effect);
         }
     };
 
@@ -101,15 +99,13 @@ module.exports.stepping = function stepping(options) {
         if (effect.sent.length > 0) {
             options.enqueue(events, effect.sent);
         }
-        recordEffect(effect);
+        initEffect(effect);
     };
 
     /*
-    Record `effect` in `history`
-    and initialize a new `options.stepping.effect` object.
+    Initialize a new `options.stepping.effect` object.
     */
-    var recordEffect = function recordEffect(effect) {
-        history.push(effect);
+    var initEffect = function initEffect(effect) {
         options.stepping.effect = {
             created: [],
             sent: []
@@ -117,6 +113,8 @@ module.exports.stepping = function stepping(options) {
     };
 
     /*
+    Dispatch the next `event`.
+    
       * Return: _Effect_ or `false`. Effect of dispatching the next `event` or
           `false` if no events exists for dispatch.
     */
@@ -143,15 +141,10 @@ module.exports.stepping = function stepping(options) {
     };
 
     /*
-      * `control`: _Object_ _(Default: `undefined`)_ Optional overrides.
-        * `count`: _Number_ _(Default: `undefined`)_ Maximum number of events to
-            dispatch, or unlimited if `undefined`.
-        * `fail`: _Function_ `function (exception) {}` Function called to report
-            exceptions thrown from an actor behavior. Exceptions are thrown by
-            default. _(Example: `function (exception) {}` ignores exceptions)_.
-        * `log`: _Function_ `function (effect) {}` Function called with every
-            effect resulting from an event dispatch.
-      * Return: _Boolean_ `true` if event queue is exhausted, `false` otherwise.
+    Dispatch events in a manner provided by `control`. 
+
+    By default, calling `stepping.eventLoop()` with no parameters 
+    dispatches all events in the event queue.
     */
     var eventLoop = function eventLoop(control) {
         control = control || {};
@@ -182,7 +175,6 @@ module.exports.stepping = function stepping(options) {
         var config = function create(behavior) {
             var actor = function send(message) {
                 var event = {
-                    cause: options.stepping.effect.event,
                     message: message,
                     context: context
                 };
@@ -207,7 +199,6 @@ module.exports.stepping = function stepping(options) {
             created: [],
             sent: []
         },
-        history: history,
         dispatch: steppingDispatch,
         eventLoop: eventLoop,
         sponsor: tart.pluggable(options)

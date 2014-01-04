@@ -51,7 +51,7 @@ var effect;
 
 console.log('stepping:');
 console.log(util.inspect(stepping, {depth: null}));
-while ((effect = stepping.dispatch()) != false) {
+while ((effect = stepping.dispatch()) !== false) {
     console.log('effect:');
     console.log(util.inspect(effect, {depth: null}));
 };
