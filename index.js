@@ -157,7 +157,8 @@ module.exports.stepping = function stepping(options) {
         control = control || {};
         control.log = control.log || defaultLog;
         control.fail = control.fail || defaultFail;
-        while ((control.count === undefined) || (--control.count >= 0)) {
+        var count = control.count;
+        while ((count === undefined) || (--count >= 0)) {
             var effect = options.stepping.dispatch();
             control.log(effect);  // log event
             if (effect === false) {
