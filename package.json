@@ -5,6 +5,7 @@
   "scripts": {
     "inject-examples": "node scripts/injectExamples.js",
     "readme": "node examples/readme.js",
+    "multiplex": "node examples/multiplex.js",
     "test": "node scripts/test.js"
   },
   "main": "index.js",
