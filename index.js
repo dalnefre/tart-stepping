@@ -140,6 +140,13 @@ module.exports.stepping = function stepping(options) {
         return effect;
     };
 
+    var defaultLog = function log(effect) {
+        /* no logging */
+    };
+    var defaultFail = function fail(exception) {
+        throw exception;
+    };
+
     /*
     Dispatch events in a manner provided by `control`. 
 
@@ -148,12 +155,8 @@ module.exports.stepping = function stepping(options) {
     */
     var eventLoop = function eventLoop(control) {
         control = control || {};
-        control.log = control.log || function log(effect) {
-            /* no logging */
-        };
-        control.fail = control.fail || function fail(exception) {
-            throw exception;
-        };
+        control.log = control.log || defaultLog;
+        control.fail = control.fail || defaultFail;
         while ((control.count === undefined) || (--control.count >= 0)) {
             var effect = options.stepping.dispatch();
             control.log(effect);  // log event
