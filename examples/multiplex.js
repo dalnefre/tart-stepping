@@ -55,22 +55,19 @@ var adapter = function adapter(obj, fn) {
     };
 };
 
-var stepperA = rootSponsor(adapter(steppingA, steppingA.dispatch));
-var stepperB = rootSponsor(adapter(steppingB, steppingB.dispatch));
-var stepperC = rootSponsor(adapter(steppingC, steppingC.dispatch));
-
 /*
 Create an actor behavior that multiplexes
-among a list of stepping configurations,
-processing one event for each (round-robin)
+among a list of child configurations,
+dispatching one event for each (round-robin)
 until no events remain.
 */
-var roundRobin = function roundRobin(steppers) {
-    var m = steppers.length;
+var roundRobin = function roundRobin(children) {
+    var m = children.length;
     var n = m;  // countdown to idle
-    var i = 0;  // current stepper
+    var i = 0;  // current child index
     var dispatchBeh = function dispatchBeh() {
-        steppers[i]({
+        var child = children[i];
+        child({
             arguments: [],
             customer: this.self
         });
@@ -83,10 +80,10 @@ var roundRobin = function roundRobin(steppers) {
 */
             n = m;  // reset idle countdown
         } else {
-            --n;  // countdown idle steppers
+            --n;  // countdown idle children
         }
         if (n > 0) {
-            ++i;  // advance to next stepper
+            ++i;  // advance to next child
             if (i >= m) {
                 i = 0;
             }
@@ -97,11 +94,67 @@ var roundRobin = function roundRobin(steppers) {
     return dispatchBeh;
 };
 
+/**/
+var dispatchA = rootSponsor(adapter(steppingA, steppingA.dispatch));
+var dispatchB = rootSponsor(adapter(steppingB, steppingB.dispatch));
+var dispatchC = rootSponsor(adapter(steppingC, steppingC.dispatch));
+
 var multiplexer = rootSponsor(roundRobin([
-    stepperA, 
-    stepperB, 
-    stepperC 
+    dispatchA, 
+    dispatchC, 
+    dispatchB, 
+    dispatchC 
 ]));
+/**/
+
+/*
+Create an actor behavior that multiplexes
+among a list of child configurations,
+calling `eventLoop(options)` for each
+until all event queues are exhausted.
+*/
+var multiplex = function multiplex(children) {
+    var m = children.length;
+    var n = m;  // countdown to idle
+    var i = 0;  // current child index
+    var dispatchBeh = function dispatchBeh() {
+        var child = children[i];
+        child.eventLoop({
+            arguments: [ child.options ],
+            customer: this.self
+        });
+        this.behavior = statusBeh;  // wait for eventLoop status
+    };
+    var statusBeh = function statusBeh(empty) {
+    	console.log(i, empty);
+        if (empty) {
+            --n;  // countdown idle children
+        } else {
+            n = m;  // reset idle countdown
+        }
+        if (n > 0) {
+            ++i;  // advance to next child
+            if (i >= m) {
+                i = 0;
+            }
+            this.self();
+            this.behavior = dispatchBeh;  // dispatch next event
+        }
+    };
+    return dispatchBeh;
+};
+
+/*
+var eventLoopA = rootSponsor(adapter(steppingA, steppingA.eventLoop));
+var eventLoopB = rootSponsor(adapter(steppingB, steppingB.eventLoop));
+var eventLoopC = rootSponsor(adapter(steppingC, steppingC.eventLoop));
+
+var multiplexer = rootSponsor(multiplex([
+    { eventLoop:eventLoopA, options:{ count:1 } }, 
+    { eventLoop:eventLoopB }, 
+    { eventLoop:eventLoopC, options:{} }
+]));
+/**/
 
 /*
 Create an actor behavior that counts down to zero,
