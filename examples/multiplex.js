@@ -74,10 +74,13 @@ var roundRobin = function roundRobin(steppers) {
             arguments: [],
             customer: this.self
         });
-        this.behavior = statusBeh;  // wait for dispatch status
+        this.behavior = effectBeh;  // wait for dispatch effect
     };
-    var statusBeh = function statusBeh(ok) {
-        if (ok) {
+    var effectBeh = function effectBeh(effect) {
+        if (effect) {
+/*
+            console.log(util.inspect(effect, {depth: null}));
+*/
             n = m;  // reset idle countdown
         } else {
             --n;  // countdown idle steppers
