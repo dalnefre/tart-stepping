@@ -61,7 +61,11 @@ console.log(util.inspect(stepping, {depth: null}));
 
 ### Events
 
-An `event` is an abstraction around the concept of a `message` being delivered to the actor. It is a tuple of a `message`, `context`, and `cause`. When an `event` is dispatched, the actor `context` is bound to `this` parameter and the behavior is executed given the `message`. The result of processing the `message` is an `effect`.
+An `event` is an abstraction around the concept of a `message` being delivered to the actor. 
+It is a tuple of a `message` and `context`. 
+When an `event` is dispatched, the actor `context` is bound to `this`  
+and the `context.behavior` is executed with the `message` as a parameter. 
+The result of processing the `message` is an `effect`.
 
 An `event` has the following attributes:
 
