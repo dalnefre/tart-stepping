@@ -73,6 +73,71 @@ test["eventLoop dispatches specified number of events and returns 'false' if not
     test.done();
 };
 
+test["eventLoop({count: 1}) dispatches single events and returns 'true' when empty"] = function (test) {
+    test.expect(10);
+    var controls = tart.stepping();
+
+    var step = null;
+    var one = controls.sponsor(function (message) {
+        test.ok(message);
+        step = 'one';
+    });
+    var two = controls.sponsor(function (message) {
+        test.ok(message);
+        step = 'two';
+    });
+    var three = controls.sponsor(function (message) {
+        test.ok(message);
+        step = 'three';
+    });
+    
+    one(true);
+    two(true);
+    three(true);
+
+    var options = { count: 1 };
+
+    test.strictEqual(false, controls.eventLoop(options));
+    test.strictEqual('one', step);
+
+    test.strictEqual(false, controls.eventLoop(options));
+    test.strictEqual('two', step);
+
+    test.strictEqual(false, controls.eventLoop(options));
+    test.strictEqual('three', step);
+
+    test.strictEqual(true, controls.eventLoop(options));
+    test.done();
+};
+
+test["eventLoop should not mutate options"] = function (test) {
+    test.expect(10);
+    var controls = tart.stepping();
+
+    var step = 0;
+    var actor = controls.sponsor(function (message) {
+        test.ok(message);
+        step = message;
+    });
+    
+    actor(1);
+    actor(2);
+
+    var options = { count: 1 };
+    test.strictEqual(1, options.count);
+
+    test.strictEqual(false, controls.eventLoop(options));
+    test.strictEqual(1, step);
+    test.strictEqual(1, options.count);
+
+    test.strictEqual(false, controls.eventLoop(options));
+    test.strictEqual(2, step);
+    test.strictEqual(1, options.count);
+
+    test.strictEqual(true, controls.eventLoop(options));
+    test.done();
+};
+
 test["eventLoop throw exception and pause by default if actor behavior throws an exception"] = function (test) {
     test.expect(5);
     var controls = tart.stepping();
