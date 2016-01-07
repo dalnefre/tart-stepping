@@ -2,6 +2,8 @@
 
 Stepping configuration implementation for [Tiny Actor Run-Time in JavaScript](https://github.com/organix/tartjs).
 
+**--DEPRECATED--** This module is superceded by [tart-tracing](https://github.com/tristanls/tart-tracing), which maintains a full event history.
+
 ## Contributors
 
 [@dalnefre](https://github.com/dalnefre), [@tristanls](https://github.com/tristanls)
